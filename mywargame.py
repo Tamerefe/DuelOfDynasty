@@ -93,7 +93,7 @@ N)Ninja
 G)Gunsmith
 F)Fighter
 H)Healer
-M)Magician  
+M)Magician
 
     """ + clorst)
     choicS = input("Enter the Transaction Number : ").lower()

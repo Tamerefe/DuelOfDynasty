@@ -1,253 +1,189 @@
-from colorama import Fore, Style
+from colorama import Fore, Style, init
 import random
 
-njfr = random.randint(450,550)
-njhr = random.randint(3000,3500)
+# Initialize colorama
+init(autoreset=True)
 
-gsfr = random.randint(850,1050)
-gshr = random.randint(1400,2000)
-
-ftfr = random.randint(275,325)
-fthr = random.randint(5000,6000)
-
-hlfr = random.randint(150,200)
-hlhr = random.randint(2200,3200)
-hlpr = random.randint(375,525)
-
-mgfr = random.randint(325,400)
-mghr = random.randint(2250,2750)
-mgpr = random.randint(100,150)
-
+# Define Characters with their attributes
 chlst = {
-
-    "Ninja" : {
-    "Power": njfr,
-    "Hp" : njhr,
-    "Heal": 0,
-    "Dodge": "%25",
-    "Name" : "Ninja"
+    "Ninja": {
+        "Power": random.randint(450, 550),
+        "Hp": random.randint(3000, 3500),
+        "Heal": 0,
+        "Dodge": 25,  # Percentage
+        "Name": "Ninja"
     },
-
-    "Gunsmith" : {
-    "Power": gsfr,
-    "Hp" : gshr,
-    "Heal": 0,
-    "Dodge": "%16",
-    "Name" : "Gunsmith"
+    "Gunsmith": {
+        "Power": random.randint(850, 1050),
+        "Hp": random.randint(1400, 2000),
+        "Heal": 0,
+        "Dodge": 16,
+        "Name": "Gunsmith"
     },
-
-    "Fighter" : {
-    "Power": ftfr,
-    "Hp" : fthr,
-    "Heal": 0,
-    "Dodge": "%14",
-    "Name" : "Fighter"
+    "Fighter": {
+        "Power": random.randint(275, 325),
+        "Hp": random.randint(5000, 6000),
+        "Heal": 0,
+        "Dodge": 14,
+        "Name": "Fighter"
     },
-
-    "Healer" : {
-    "Power": hlfr,
-    "Hp" : hlhr,
-    "Heal":hlpr,
-    "Dodge": "%9",
-    "Name" : "Healer"
+    "Healer": {
+        "Power": random.randint(150, 200),
+        "Hp": random.randint(2200, 3200),
+        "Heal": random.randint(375, 525),
+        "Dodge": 9,
+        "Name": "Healer"
     },
-
-    "Magician" : {
-    "Power": mgfr,
-    "Hp" : mghr,
-    "Heal":mgpr,
-    "Dodge": "%33",
-    "Name" : "Magician"
+    "Magician": {
+        "Power": random.randint(325, 400),
+        "Hp": random.randint(2250, 2750),
+        "Heal": random.randint(100, 150),
+        "Dodge": 33,
+        "Name": "Magician"
     }
 }
 
-lgt = [chlst['Gunsmith'],chlst['Fighter'],chlst['Healer'],chlst['Ninja'],chlst['Magician']]
+# List of opponents excluding the player
+lgt = [chlst['Gunsmith'], chlst['Fighter'], chlst['Healer'], chlst['Ninja'], chlst['Magician']]
 
-def hit(shooter,shot):
-    shot["Hp"] -= shooter["Power"]
+def hit(shooter, target):
+    """Apply damage to the target based on shooter's power."""
+    target["Hp"] -= shooter["Power"]
+    print(f"{Fore.RED}{shooter['Name']} hits {target['Name']} for {shooter['Power']} damage!{Style.RESET_ALL}")
 
-def can(given,received):
-    received["Hp"] += given["Heal"]
+def can_heal(healer, target):
+    """Apply healing to the target based on healer's heal power."""
+    target["Hp"] += healer["Heal"]
+    print(f"{Fore.GREEN}{healer['Name']} heals for {healer['Heal']} HP!{Style.RESET_ALL}")
 
-clo = (Fore.WHITE + Style.BRIGHT)
-clorst = (Fore.RESET + Style.RESET_ALL)
+def attempt_dodge(attacker):
+    """Determine if the attacker dodges the attack based on Dodge percentage."""
+    dodge_chance = random.randint(1, 100)
+    if dodge_chance <= attacker["Dodge"]:
+        print(f"{Fore.CYAN}{attacker['Name']} dodged the attack!{Style.RESET_ALL}")
+        return True
+    return False
 
-print(clo + """
+def select_character():
+    """Prompt the user to select a character."""
+    print(Fore.WHITE + Style.BRIGHT + """
+        Select Your Character
+
+    N) Ninja
+    G) Gunsmith
+    F) Fighter
+    H) Healer
+    M) Magician
+
+    """ + Style.RESET_ALL)
+    choicS = input("Enter the Character Initial: ").lower()
+    mapping = {
+        'n': 'Ninja',
+        'g': 'Gunsmith',
+        'f': 'Fighter',
+        'h': 'Healer',
+        'm': 'Magician'
+    }
+    return mapping.get(choicS, None)
+
+def combat(player, opponent):
+    """Handle the combat between player and opponent."""
+    print(f"\n{Fore.YELLOW}Our war begins between {player['Name']} and {opponent['Name']}!{Style.RESET_ALL}")
+    while player["Hp"] > 0 and opponent["Hp"] > 0:
+        input(f"\nPress {Style.BRIGHT}'Enter'{Style.RESET_ALL} to proceed to the next round...")
+        print(f"{Fore.WHITE}{'-'*50}{Style.RESET_ALL}")
+
+        # Player's turn
+        action = 'attack'
+        if player["Heal"] > 0:
+            action = input(f"Choose action for {player['Name']} - (A)ttack or (H)eal: ").lower()
+            if action == 'h':
+                can_heal(player, player)
+            else:
+                if not attempt_dodge(opponent):
+                    hit(player, opponent)
+
+        else:
+            if not attempt_dodge(opponent):
+                hit(player, opponent)
+
+        # Check if opponent is defeated
+        if opponent["Hp"] <= 0:
+            print(f"\n{Fore.YELLOW}{player['Name']} Wins!{Style.RESET_ALL}")
+            break
+
+        # Opponent's turn
+        # Simple AI: Healer and Magician might choose to heal, others attack
+        if opponent["Heal"] > 0:
+            # 50% chance to heal
+            if random.choice([True, False]):
+                can_heal(opponent, opponent)
+            else:
+                if not attempt_dodge(player):
+                    hit(opponent, player)
+        else:
+            if not attempt_dodge(player):
+                hit(opponent, player)
+
+        # Check if player is defeated
+        if player["Hp"] <= 0:
+            print(f"\n{Fore.YELLOW}{opponent['Name']} Wins!{Style.RESET_ALL}")
+            break
+
+        # Check for draw
+        if player["Hp"] <= 0 and opponent["Hp"] <= 0:
+            print(f"\n{Fore.MAGENTA}Both {player['Name']} and {opponent['Name']} have fallen. It's a Draw!{Style.RESET_ALL}")
+            break
+
+        # Display current health
+        print(f"{Fore.GREEN}{player['Name']}'s Health: {player['Hp']}{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}{opponent['Name']}'s Health: {opponent['Hp']}{Style.RESET_ALL}")
+        print(f"{Fore.WHITE}{'-'*50}{Style.RESET_ALL}")
+
+def show_character_skills():
+    """Display the skills of all characters."""
+    print("\nCharacter Skills:\n")
+    for char in chlst.values():
+        print(f"{Fore.WHITE}{char['Name']}:\n"
+              f"  {Fore.YELLOW}Power: {char['Power']}\n"
+              f"  {Fore.GREEN}Hp: {char['Hp']}\n"
+              f"  {Fore.RED}Heal: {char['Heal']}\n"
+              f"  {Fore.CYAN}Dodge: {char['Dodge']}%\n")
+
+def main_menu():
+    """Display the main menu and handle user choices."""
+    while True:
+        print(Fore.WHITE + Style.BRIGHT + """
                                     Welcome to My Python War Game o7
 
-1) 1 Vs 1
-2) 1 Vs 2
-3) 2 Vs 2
-4) Character Skills
-Q) Quit
-""" + clorst)
+        1) 1 Vs 1
+        2) 1 Vs 2
+        3) 2 Vs 2
+        4) Character Skills
+        Q) Quit
+        """ + Style.RESET_ALL)
 
-choic = input("Enter the Transaction Number : ")
+        choic = input("Enter the Transaction Number: ").lower()
 
-if choic == "1":
-    print(clo + """
+        if choic == "1":
+            selected = select_character()
+            if selected:
+                player = chlst[selected].copy()  # Use copy to prevent modifying original stats
+                opponent = random.choice([ch for ch in lgt if ch["Name"] != selected]).copy()
+                combat(player, opponent)
+            else:
+                print(f"{Fore.RED}Invalid character selection!{Style.RESET_ALL}")
+        elif choic == "2":
+            print("BB Daha Sonra Tekrar Bekleriz...")
+        elif choic == "3":
+            print("BB Daha Sonra Tekrar Bekleriz...")
+        elif choic == "4":
+            show_character_skills()
+        elif choic == "q":
+            print("BB Daha Sonra Tekrar Bekleriz...")
+            break
+        else:
+            print(f"{Fore.RED}Invalid choice! Please try again.{Style.RESET_ALL}")
 
-    Select Your Character
-
-N)Ninja
-G)Gunsmith
-F)Fighter
-H)Healer
-M)Magician
-
-    """ + clorst)
-    choicS = input("Enter the Transaction Number : ").lower()
-
-    if choicS == "n":
-        print("\nOur war begins")
-        chrt = random.choice(lgt)
-        while True:
-            input(f"Press {Style.BRIGHT}'enter'{clorst} for to new round! ")
-            print(f"{clo}-{clorst}"*25)
-            if random.randint(1,3) == 1:
-                print(f"{Fore.CYAN}Dodge {chrt['Name']}{clorst}")
-            else:
-                hit(chlst['Ninja'],chrt)
-            if random.randint(1,4) == 1:
-                print(f"{Fore.CYAN}Dodge Ninja{clorst}")
-            else:
-                hit(chrt,chlst['Ninja'])
-            print(f"{Fore.GREEN}Ninja's Health:{clorst}",chlst['Ninja']["Hp"])
-            print(f"{Fore.GREEN}{chrt['Name']}'s Health:{clorst}",chrt["Hp"])
-            if chlst['Ninja']["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}{chrt['Name']} Win{clorst}")
-                break
-            elif chrt["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}Ninja Win{clorst}")
-                break
-            if chrt["Hp"] and chlst['Ninja']["Hp"] < 0:
-                print(f"\n{Fore.MAGENTA}Ninja and {chrt['Name']} shot at the same time, Draw{clorst}")
-                break
-            else:
-                print(f"{clo}-{clorst}"*25)
-    elif choicS == "g":
-        print("\nOur war begins")
-        chrt = random.choice(lgt)
-        while True:
-            input(f"Press {Style.BRIGHT}'enter'{clorst} for to new round! ")
-            print(f"{clo}-{clorst}"*25)
-            if random.randint(1,3) == 1:
-                print(f"{Fore.CYAN}Dodge {chrt['Name']}{clorst}")
-            else:
-                hit(chlst['Gunsmith'],chrt)
-            if random.randint(1,4) == 1:
-                print(f"{Fore.CYAN}Dodge Gunsmith{clorst}")
-            else:
-                hit(chrt,chlst['Gunsmith'])
-            print(f"{Fore.GREEN}Gunsmith's Health:{clorst}",chlst['Gunsmith']["Hp"])
-            print(f"{Fore.GREEN}{chrt['Name']}'s Health:{clorst}",chrt["Hp"])
-            if chlst['Gunsmith']["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}{chrt['Name']} Win{clorst}")
-                break
-            elif chrt["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}Gunsmith Win{clorst}")
-                break
-            if chrt["Hp"] and chlst['Gunsmith']["Hp"] < 0:
-                print(f"\n{Fore.MAGENTA}Gunsmith and {chrt['Name']} shot at the same time, Draw{clorst}")
-                break
-            else:
-                print(f"{clo}-{clorst}"*25)
-    elif choicS == "f":
-        print("\nOur war begins")
-        chrt = random.choice(lgt)
-        while True:
-            input(f"Press {Style.BRIGHT}'enter'{clorst} for to new round! ")
-            print(f"{clo}-{clorst}"*25)
-            if random.randint(1,3) == 1:
-                print(f"{Fore.CYAN}Dodge {chrt['Name']}{clorst}")
-            else:
-                hit(chlst['Fighter'],chrt)
-            if random.randint(1,4) == 1:
-                print(f"{Fore.CYAN}Dodge Fighter{clorst}")
-            else:
-                hit(chrt,chlst['Fighter'])
-            print(f"{Fore.GREEN}Fighter's Health:{clorst}",chlst['Fighter']["Hp"])
-            print(f"{Fore.GREEN}{chrt['Name']}'s Health:{clorst}",chrt["Hp"])
-            if chlst['Fighter']["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}{chrt['Name']} Win{clorst}")
-                break
-            elif chrt["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}Fighter Win{clorst}")
-                break
-            if chrt["Hp"] and chlst['Fighter']["Hp"] < 0:
-                print(f"\n{Fore.MAGENTA}Fighter and {chrt['Name']} shot at the same time, Draw{clorst}")
-                break
-            else:
-                print(f"{clo}-{clorst}"*25)
-    elif choicS == "h":
-        print("\nOur war begins")
-        chrt = random.choice(lgt)
-        while True:
-            input(f"Press {Style.BRIGHT}'enter'{clorst} for to new round! ")
-            print(f"{clo}-{clorst}"*25)
-            if random.randint(1,3) == 1:
-                print(f"{Fore.CYAN}Dodge {chrt['Name']}{clorst}")
-            else:
-                hit(chlst['Healer'],chrt)
-            if random.randint(1,4) == 1:
-                print(f"{Fore.CYAN}Dodge Healer{clorst}")
-            else:
-                hit(chrt,chlst['Healer'])
-            print(f"{Fore.GREEN}Healer's Health:{clorst}",chlst['Healer']["Hp"])
-            print(f"{Fore.GREEN}{chrt['Name']}'s Health:{clorst}",chrt["Hp"])
-            if chlst['Healer']["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}{chrt['Name']} Win{clorst}")
-                break
-            elif chrt["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}Healer Win{clorst}")
-                break
-            if chrt["Hp"] and chlst['Healer']["Hp"] < 0:
-                print(f"\n{Fore.MAGENTA}Healer and {chrt['Name']} shot at the same time, Draw{clorst}")
-                break
-            else:
-                print(f"{clo}-{clorst}"*25)
-    elif choicS == "m":
-        print("\nOur war begins")
-        chrt = random.choice(lgt)
-        while True:
-            input(f"Press {Style.BRIGHT}'enter'{clorst} for to new round! ")
-            print(f"{clo}-{clorst}"*25)
-            if random.randint(1,3) == 1:
-                print(f"{Fore.CYAN}Dodge {chrt['Name']}{clorst}")
-            else:
-                hit(chlst['Magician'],chrt)
-            if random.randint(1,4) == 1:
-                print(f"{Fore.CYAN}Dodge Magician{clorst}")
-            else:
-                hit(chrt,chlst['Magician'])
-            print(f"{Fore.GREEN}Magician's Health:{clorst}",chlst['Magician']["Hp"])
-            print(f"{Fore.GREEN}{chrt['Name']}'s Health:{clorst}",chrt["Hp"])
-            if chlst['Magician']["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}{chrt['Name']} Win{clorst}")
-                break
-            elif chrt["Hp"] < 0:
-                print(f"\n{Fore.YELLOW}Magician Win{clorst}")
-                break
-            if chrt["Hp"] and chlst['Magician']["Hp"] < 0:
-                print(f"\n{Fore.MAGENTA}Magician and {chrt['Name']} shot at the same time, Draw{clorst}")
-                break
-            else:
-                print(f"{clo}-{clorst}"*25)
-        
-elif choic == "2":
-    print("BB Daha Sonra Tekrar Bekleriz...")
-elif choic == "3":
-    print("BB Daha Sonra Tekrar Bekleriz...")
-elif choic == "4":
-    print("Character Skills:\n")
-    print(f"{clo}Ninja;\n {Fore.YELLOW}Power = {chlst['Ninja']['Power']}\n {Fore.GREEN}Hp = {chlst['Ninja']['Hp']}\n {Fore.RED}Heal = {chlst['Ninja']['Heal']}\n {Fore.CYAN}Dodge = {chlst['Ninja']['Dodge']}\n")
-    print(f"{clo}Gunsmith;\n {Fore.YELLOW}Power = {chlst['Gunsmith']['Power']}\n {Fore.GREEN}Hp = {chlst['Gunsmith']['Hp']}\n {Fore.RED}Heal = {chlst['Gunsmith']['Heal']}\n {Fore.CYAN}Dodge = {chlst['Gunsmith']['Dodge']}\n")
-    print(f"{clo}Fighter;\n {Fore.YELLOW}Power = {chlst['Fighter']['Power']}\n {Fore.GREEN}Hp = {chlst['Fighter']['Hp']}\n {Fore.RED}Heal = {chlst['Fighter']['Heal']}\n {Fore.CYAN}Dodge = {chlst['Fighter']['Dodge']}\n")
-    print(f"{clo}Healer;\n {Fore.YELLOW}Power = {chlst['Healer']['Power']}\n {Fore.GREEN}Hp = {chlst['Healer']['Hp']}\n {Fore.RED}Heal = {chlst['Healer']['Heal']}\n {Fore.CYAN}Dodge = {chlst['Healer']['Dodge']}\n {clorst}")
-elif choic == "Q" or choic == "q":
-    print("BB Daha Sonra Tekrar Bekleriz...")
-    quit()  
-
-    # Dodge mekanigini düzelt dıştan çek
-    # Heal basma muhabettini coz 
-    
+if __name__ == "__main__":
+    main_menu()
